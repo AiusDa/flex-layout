@@ -11,6 +11,9 @@ import 'rxjs/add/operator/map';
 import {ModuleWithProviders, NgModule} from '@angular/core';
 import {MediaMonitor} from '../media-query/media-monitor';
 import {MediaQueriesModule} from '../media-query/_module';
+import {BreakPoint} from '../media-query/breakpoints/break-point';
+import {RAW_DEFAULTS, BREAKPOINTS} from '../media-query/breakpoints/break-points';
+import { mergeByAlias } from '../utils/breakpoint-tools';
 
 import {FlexDirective} from './api/flex';
 import {LayoutDirective} from './api/layout';
@@ -49,6 +52,27 @@ const ALL_DIRECTIVES = [
 ];
 
 /**
+ * Add new custom items to the default list or override existing default with custom overrides
+ */
+export function _initialBreakPointFactory(_custom: BreakPoint[], defaults: BreakPoint[ ]) {
+  return mergeByAlias(_custom, defaults);
+}
+
+/**
+ * @deprecated, use FlexLayoutModule.provideLayout instead!
+ */
+export function provideLayout(_custom: BreakPoint[]): any[] {
+  return [
+    MediaMonitor,
+    {
+      provide: BREAKPOINTS,
+      useFactory:_initialBreakPointFactory,
+      deps:[_custom, RAW_DEFAULTS]
+    }
+  ];
+}
+
+/**
  *
  */
 @NgModule({
@@ -58,10 +82,10 @@ const ALL_DIRECTIVES = [
   providers: [MediaMonitor]
 })
 export class FlexLayoutModule {
-  /** @deprecated */
-  static forRoot(): ModuleWithProviders {
+  static provideLayout(breakpoints: BreakPoint[]): ModuleWithProviders {
     return {
-      ngModule: FlexLayoutModule
+      ngModule: FlexLayoutModule,
+      providers: provideLayout(breakpoints)
     };
   }
 }
